@@ -68,11 +68,15 @@ function get_messages() { # $0 api_name jq_commands message_color_control_code m
 	RESULT="${result%$'\n'}"
 }
 
+[ "$1" == '-v' ] && VERBOSE=true
+
 call_jq "system/status" '.myID'
 local_device_id="$RESULT"
 call_jq "system/config" '.devices | map(select(.deviceID == "'$local_device_id'"))[] | .name'
 local_device_name="$RESULT"
-echo -e "Local device: $local_device_name ${COLOR_GRAY}($local_device_id)${COLOR_RESET}\n"
+echo -n "Local device: $local_device_name"
+[ "$VERBOSE" ] && echo -en " ${COLOR_GRAY}($local_device_id)${COLOR_RESET}"
+echo $'\n'
 
 echo "Devices:"
 call_jq "system/config" '.devices[] | .deviceID'
@@ -90,7 +94,9 @@ for device_id in $RESULT; do
 	elif [ "$(jq_arg "$device_status" '.connected')" == "true" ]; then
 		status="${COLOR_GREEN}$(jq_arg "$device_status" '.type')${COLOR_RESET}"
 	fi
-	echo -e "$status ${COLOR_GRAY}($device_id)${COLOR_RESET}"
+	echo -en "$status"
+	[ "$VERBOSE" ] && echo -en " ${COLOR_GRAY}($device_id)${COLOR_RESET}"
+	echo
 done
 
 echo -e "\nFolders:"
@@ -100,7 +106,7 @@ for folder_id in $RESULT; do
 	folder_config="$RESULT"
 	folder_label="$(jq_arg "$folder_config" '.label')"
 	if [ "$folder_label" ]; then
-		folder_label+=" ${COLOR_GRAY}($folder_id)${COLOR_RESET}"
+		[ "$VERBOSE" ] && folder_label+=" ${COLOR_GRAY}($folder_id)${COLOR_RESET}"
 	else
 		folder_label="$folder_id"
 	fi
@@ -135,9 +141,11 @@ for folder_id in $RESULT; do
 	echo -e "$folder_status"
 done
 
-get_messages "system/log" '.messages[]?' '' "$LOG_MAX_AGE"
-echo -e "\nLast log entries:"
-echo -e "$RESULT"
+if [ "$VERBOSE" ]; then
+	get_messages "system/log" '.messages[]?' '' "$LOG_MAX_AGE"
+	echo -e "\nLast log entries:"
+	echo -e "$RESULT"
+fi
 get_messages "system/error" '.errors[]?' "$COLOR_RED"
 if [ "$RESULT" ]; then
 	echo -e "\nERRORS:"
