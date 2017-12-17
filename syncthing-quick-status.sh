@@ -84,23 +84,32 @@ for folder_id in $RESULT; do
 	fi
 	echo -en "$folder_label: "
 	folder_status=
+	need_bytes=0
 	folder_paused="$(jq_arg "$folder_config" '.paused')"
 	[ "$folder_paused" == "true" ] && folder_status="paused"
 	if [ -z "$folder_status" ]; then
 		call_jq "db/status?folder=$folder_id" '.state'
 		folder_status="$RESULT"
+		call_jq "db/status?folder=$folder_id" '.needBytes'
+		need_bytes="$RESULT"
+		need_bytes_formatted=
+		[ "$need_bytes" -gt 0 ] &&
+			need_bytes_formatted="$(numfmt --to=iec-i --suffix=B "$need_bytes")"
 	fi
 	case "$folder_status" in
 		paused)
 			folder_status="${COLOR_GRAY}$folder_status${COLOR_RESET}"
 			;;
 		idle)
-			folder_status="${COLOR_GREEN}$folder_status${COLOR_RESET}"
+			[ "$need_bytes" -eq 0 ] &&
+				folder_status="${COLOR_GREEN}up to date${COLOR_RESET}" ||
+				folder_status="${COLOR_RED}out of sync${COLOR_RESET}"
 			;;
 		scanning|syncing)
 			folder_status="${COLOR_BLUE}$folder_status${COLOR_RESET}"
 			;;
 	esac
+	[ "$need_bytes" -gt 0 ] && folder_status+=" ($need_bytes_formatted)"
 	echo -e "$folder_status"
 done
 
