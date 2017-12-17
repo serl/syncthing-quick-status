@@ -76,17 +76,25 @@ for folder_id in $RESULT; do
 		folder_label="$folder_id"
 	fi
 	echo -en "$folder_label: "
-	call_jq "db/status?folder=$folder_id" '.state'
-	status="$RESULT"
-	case "$status" in
+	folder_status=
+	folder_paused="$(jq_arg "$folder_config" '.paused')"
+	[ "$folder_paused" == "true" ] && folder_status="paused"
+	if [ -z "$folder_status" ]; then
+		call_jq "db/status?folder=$folder_id" '.state'
+		folder_status="$RESULT"
+	fi
+	case "$folder_status" in
+		paused)
+			folder_status="${COLOR_GRAY}$folder_status${COLOR_RESET}"
+			;;
 		idle)
-			status="${COLOR_GREEN}$status${COLOR_RESET}"
+			folder_status="${COLOR_GREEN}$folder_status${COLOR_RESET}"
 			;;
 		scanning|syncing)
-			status="${COLOR_BLUE}$status${COLOR_RESET}"
+			folder_status="${COLOR_BLUE}$folder_status${COLOR_RESET}"
 			;;
 	esac
-	echo -e "$status"
+	echo -e "$folder_status"
 done
 
 get_messages "system/log" '.messages[]'
