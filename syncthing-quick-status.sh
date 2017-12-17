@@ -29,7 +29,7 @@ declare -A api_cache=()
 function get_api_response() { # $0 api_name
 	if [ -z "${api_cache["$1"]}" ]; then
 		[ "$DEBUG" ] && echo -e "${COLOR_GRAY}CALLING API: $1${COLOR_RESET}" >&2
-		api_cache["$1"]="$(curl --silent -H "X-API-Key: $SYNCTHING_API_KEY" "http://$SYNCTHING_ADDRESS/rest/$1")"
+		api_cache["$1"]="$(curl --silent --insecure -L -H "X-API-Key: $SYNCTHING_API_KEY" "http://$SYNCTHING_ADDRESS/rest/$1")"
 	fi
 	RESULT="${api_cache["$1"]}"
 	# using stdout and piping direclty to jq would jump over the cache... not sure why :/
