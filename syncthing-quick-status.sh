@@ -46,9 +46,16 @@ function get_messages() {
 	RESULT="$(jq_arg "$RESULT" '.when + " " + .message')"
 }
 
+call_jq "system/status" '.myID'
+local_device_id="$RESULT"
+call_jq "system/config" '.devices | map(select(.deviceID == "'$local_device_id'"))[] | .name'
+local_device_name="$RESULT"
+echo -e "Local device: $local_device_name ${COLOR_GRAY}($local_device_id)${COLOR_RESET}\n"
+
 echo "Devices:"
 call_jq "system/config" '.devices[] | .deviceID'
 for device_id in $RESULT; do
+	[ "$device_id" == "$local_device_id" ] && continue
 	call_jq "system/config" '.devices | map(select(.deviceID == "'$device_id'"))[]'
 	device_config="$RESULT"
 	device_name="$(jq_arg "$device_config" '.name')"
