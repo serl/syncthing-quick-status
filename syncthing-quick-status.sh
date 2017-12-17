@@ -41,9 +41,28 @@ function call_jq() { # $0 api_name jq_commands
 	RESULT="$(jq_arg "$RESULT" "$2")"
 }
 
-function get_messages() {
-	call_jq "$@"
+function get_messages() { # $0 api_name jq_commands message_color_control_code max_age_in_seconds
+	call_jq "$1" "$2"
 	RESULT="$(jq_arg "$RESULT" '.when + " " + .message')"
+	local message_color="$3"
+	local max_age="${4:-0}"
+	local min_timestamp="$(($(date +%s) - $max_age))"
+	local result=
+	local formatted_line=
+	while IFS= read -r line; do
+		[ -z "$line" ] && continue
+		when="$(echo "$line" | cut -d' ' -f1)"
+		message="$(echo "$line" | cut -d' ' -f2-)"
+		timestamp="$(date --date="$when" +%s)"
+		when="$(echo "$when" | cut -d'.' -f1)"
+		formatted_line="${COLOR_GRAY}$when${COLOR_RESET} ${message_color}$message${COLOR_RESET}"$'\n'
+		[ $max_age -gt 0 ] && [ $timestamp -lt $min_timestamp ] &&
+			continue
+		result+="$formatted_line"
+	done <<< "$RESULT"
+	[ -z "$result" ] &&
+		result="$formatted_line" # take the last log line in any case
+	RESULT="${result%$'\n'}"
 }
 
 call_jq "system/status" '.myID'
@@ -113,15 +132,13 @@ for folder_id in $RESULT; do
 	echo -e "$folder_status"
 done
 
-get_messages "system/log" '.messages[]'
+get_messages "system/log" '.messages[]?' '' 300
 echo -e "\nLast log entries:"
-echo "$RESULT" | tail -n5
-call_jq "system/error" '.errors[]?'
+echo -e "$RESULT"
+get_messages "system/error" '.errors[]?' "$COLOR_RED"
 if [ "$RESULT" ]; then
 	echo -e "\nERRORS:"
-	echo -en "$COLOR_RED"
-	echo "$RESULT"
-	echo -en "$COLOR_RESET"
+	echo -e "$RESULT"
 fi
 
 if [ "$DEBUG" ]; then
