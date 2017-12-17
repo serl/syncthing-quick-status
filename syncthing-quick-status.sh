@@ -33,6 +33,8 @@ function get_api_response() { # $0 api_name
 	fi
 	RESULT="${api_cache["$1"]}"
 	# using stdout and piping direclty to jq would jump over the cache... not sure why :/
+	[ "$RESULT" == "CSRF Error" ] && return 1
+	return 0
 }
 
 function jq_arg() {
@@ -40,8 +42,8 @@ function jq_arg() {
 }
 
 function call_jq() { # $0 api_name jq_commands
-	get_api_response "$1"
-	RESULT="$(jq_arg "$RESULT" "$2")"
+	get_api_response "$1" &&
+		RESULT="$(jq_arg "$RESULT" "$2")"
 }
 
 function get_messages() { # $0 api_name jq_commands message_color_control_code max_age_in_seconds
@@ -70,7 +72,15 @@ function get_messages() { # $0 api_name jq_commands message_color_control_code m
 
 [ "$1" == '-v' ] && VERBOSE=true
 
-call_jq "system/status" '.myID'
+if ! call_jq "system/status" '.myID'; then
+	echo "Error from Syncthing API: $RESULT"
+	echo "You should probably check and change the variables SYNCTHING_API_KEY or SYNCTHING_CONFIG_FILE."
+	exit 1
+elif [ -z "$RESULT" ]; then
+	echo "Empty response from Syncthing API."
+	echo "You should probably check and change the variables SYNCTHING_ADDRESS, SYNCTHING_API_KEY or SYNCTHING_CONFIG_FILE."
+	exit 1
+fi
 local_device_id="$RESULT"
 call_jq "system/config" '.devices | map(select(.deviceID == "'$local_device_id'"))[] | .name'
 local_device_name="$RESULT"
