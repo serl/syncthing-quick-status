@@ -22,6 +22,9 @@ COLOR_BLUE='\e[34m'
 COLOR_RED='\e[31m'
 COLOR_RESET='\e[0m'
 
+LOG_ENTRIES_LIMIT=15
+LOG_MAX_AGE=300 # seconds
+
 declare -A api_cache=()
 function get_api_response() { # $0 api_name
 	if [ -z "${api_cache["$1"]}" ]; then
@@ -43,7 +46,7 @@ function call_jq() { # $0 api_name jq_commands
 
 function get_messages() { # $0 api_name jq_commands message_color_control_code max_age_in_seconds
 	call_jq "$1" "$2"
-	RESULT="$(jq_arg "$RESULT" '.when + " " + .message')"
+	RESULT="$(jq_arg "$RESULT" '.when + " " + .message' | tail -n "$LOG_ENTRIES_LIMIT")"
 	local message_color="$3"
 	local max_age="${4:-0}"
 	local min_timestamp="$(($(date +%s) - $max_age))"
@@ -132,7 +135,7 @@ for folder_id in $RESULT; do
 	echo -e "$folder_status"
 done
 
-get_messages "system/log" '.messages[]?' '' 300
+get_messages "system/log" '.messages[]?' '' "$LOG_MAX_AGE"
 echo -e "\nLast log entries:"
 echo -e "$RESULT"
 get_messages "system/error" '.errors[]?' "$COLOR_RED"
