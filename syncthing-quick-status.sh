@@ -1,9 +1,17 @@
 #!/bin/bash
 
-if ! command -v jq > /dev/null 2>&1; then
-	echo "jq executable is required but not found."
-	exit 1
+if ((BASH_VERSINFO[0] < 4)); then
+	echo "This script needs at least bash 4."
+	missing_deps=1
 fi
+for dep in curl jq; do
+	if ! command -v $dep &>/dev/null; then
+		echo "$dep is required but not found."
+		missing_deps=1
+	fi
+done
+[[ $missing_deps ]] &&
+	exit 1
 
 if [ -z "$SYNCTHING_API_KEY" ]; then
 	: ${SYNCTHING_CONFIG_FILE:="$HOME/.config/syncthing/config.xml"}
