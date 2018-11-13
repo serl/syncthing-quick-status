@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if ! command -v jq > /dev/null 2>&1; then
+	echo "jq executable is required but not found."
+	exit 1
+fi
+
 if [ -z "$SYNCTHING_API_KEY" ]; then
 	: ${SYNCTHING_CONFIG_FILE:="$HOME/.config/syncthing/config.xml"}
 	apikey_regex='^\s+<apikey>([^<]+)</apikey>$'
