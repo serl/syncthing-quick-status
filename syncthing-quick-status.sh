@@ -45,7 +45,7 @@ function get_api_response() { # $0 api_name
 		api_cache["$1"]="$(curl --silent --insecure -L -H "X-API-Key: $SYNCTHING_API_KEY" "http://$SYNCTHING_ADDRESS/rest/$1")"
 	fi
 	RESULT="${api_cache["$1"]}"
-	# using stdout and piping direclty to jq would jump over the cache... not sure why :/
+	# using stdout and piping directly to jq would jump over the cache... not sure why :/
 	[ "$RESULT" == "CSRF Error" ] && return 1
 	return 0
 }
