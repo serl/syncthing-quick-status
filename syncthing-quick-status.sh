@@ -35,6 +35,7 @@ COLOR_BLUE='\e[34m'
 COLOR_RED='\e[31m'
 COLOR_RESET='\e[0m'
 
+RECENT_CHANGES_LIMIT=5
 LOG_ENTRIES_LIMIT=15
 LOG_MAX_AGE=300 # seconds
 
@@ -59,6 +60,10 @@ function call_jq() { # $0 api_name jq_commands
 		RESULT="$(jq_arg "$RESULT" "$2")"
 }
 
+function format_time() {
+	echo "${COLOR_GRAY}$(echo "$1" | cut -d'.' -f1)${COLOR_RESET}"
+}
+
 function get_messages() { # $0 api_name jq_commands message_color_control_code max_age_in_seconds
 	call_jq "$1" "$2"
 	RESULT="$(jq_arg "$RESULT" '.when + " " + .message' | tail -n "$LOG_ENTRIES_LIMIT")"
@@ -72,8 +77,7 @@ function get_messages() { # $0 api_name jq_commands message_color_control_code m
 		when="$(echo "$line" | cut -d' ' -f1)"
 		message="$(echo "$line" | cut -d' ' -f2-)"
 		timestamp="$(date --date="$when" +%s)"
-		when="$(echo "$when" | cut -d'.' -f1)"
-		formatted_line="${COLOR_GRAY}$when${COLOR_RESET} ${message_color}$message${COLOR_RESET}"$'\n'
+		formatted_line="$(format_time $when) ${message_color}$message${COLOR_RESET}"$'\n'
 		[ $max_age -gt 0 ] && [ $timestamp -lt $min_timestamp ] &&
 			continue
 		result+="$formatted_line"
@@ -162,6 +166,34 @@ for folder_id in $RESULT; do
 	esac
 	[ "$need_bytes" -gt 0 ] && folder_status+=" ($need_bytes_formatted)"
 	echo -e "$folder_status"
+done
+
+echo -e "\nRecent changes:"
+call_jq "events/disk?limit=$RECENT_CHANGES_LIMIT" '.[] | .id'
+for event_id in $RESULT; do
+	call_jq "events/disk?limit=$RECENT_CHANGES_LIMIT" '. | map(select(.id == '$event_id'))[]'
+	event="$RESULT"
+
+	when="$(jq_arg "$event" '.time')"
+	path="$(jq_arg "$event" '.data.path')"
+
+	folder_id="$(jq_arg "$event" '.data.folderID')"
+	call_jq "system/config" '.folders | map(select(.id == "'"$folder_id"'"))[].label'
+	folder_label="${RESULT:-$folder_id}"
+
+	action="$(jq_arg "$event" '.data.action')"
+	action_color=?
+	case "$action" in
+		added) action_color=${COLOR_GREEN}+ ;;
+		deleted) action_color=${COLOR_RED}- ;;
+		modified) action_color=${COLOR_BLUE}\# ;;
+	esac
+
+	device_id_prefix="$(jq_arg "$event" '.data.modifiedBy')"
+	call_jq "system/config" '.devices | map(select(.deviceID | startswith("'"$device_id_prefix"'")))[].name'
+	device_name="${RESULT:-$device_id_prefix}"
+
+	echo -e "$(format_time $when) ${COLOR_GRAY}$device_name${COLOR_RESET} $folder_label ${action_color}$path${COLOR_RESET}"
 done
 
 if [ "$VERBOSE" ]; then
