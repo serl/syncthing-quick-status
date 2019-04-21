@@ -169,9 +169,9 @@ for folder_id in $RESULT; do
 done
 
 echo -e "\nRecent changes:"
-call_jq "events/disk?limit=$RECENT_CHANGES_LIMIT" '.[] | .id'
+call_jq "events/disk?limit=$RECENT_CHANGES_LIMIT&timeout=1" '.[] | .id'
 for event_id in $RESULT; do
-	call_jq "events/disk?limit=$RECENT_CHANGES_LIMIT" '. | map(select(.id == '$event_id'))[]'
+	call_jq "events/disk?limit=$RECENT_CHANGES_LIMIT&timeout=1" '. | map(select(.id == '$event_id'))[]'
 	event="$RESULT"
 
 	when="$(jq_arg "$event" '.time')"
