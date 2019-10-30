@@ -1,0 +1,5 @@
+language: bash
+install: # needed to have shellcheck 0.7.0
+  - sudo snap install core
+  - sudo snap install --channel=edge shellcheck
+script: PATH="/snap/bin:$PATH" shellcheck *.sh

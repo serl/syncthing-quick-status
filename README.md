@@ -1,5 +1,7 @@
 # syncthing-quick-status
 
+[![Build Status](https://travis-ci.org/serl/syncthing-quick-status.svg)](https://travis-ci.org/serl/syncthing-quick-status)
+
 > Because sometimes I'm too lazy to open the browser.
 
 An elegant(?), fast(?) and colorful(!) solution to have the complete(?) `syncthing` status in a jiffy(?).
