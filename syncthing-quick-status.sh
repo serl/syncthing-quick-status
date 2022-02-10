@@ -23,9 +23,8 @@ if [[ -z $SYNCTHING_API_KEY ]]; then
 		SYNCTHING_API_KEY=${BASH_REMATCH[1]}
 fi
 
-# MacOS' bash seems not to be 100% compatible with Linux' bash:
 if [[ -z $SYNCTHING_API_KEY ]]; then
-       SYNCTHING_API_KEY=$(echo $apikey_line | cut -d ">" -f2|cut -d"<" -f1 2>/dev/null)
+       SYNCTHING_API_KEY=$(echo "$apikey_line" | cut -d ">" -f2|cut -d"<" -f1 2>/dev/null)
 fi
 if [[ -z $SYNCTHING_API_KEY ]]; then
 	echo "No API key in env. Set one of the variables SYNCTHING_API_KEY or SYNCTHING_CONFIG_FILE and try again..."
