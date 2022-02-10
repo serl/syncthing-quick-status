@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if ((BASH_VERSINFO[0] < 4)); then
 	echo "This script needs at least bash 4."
@@ -15,8 +15,10 @@ done
 
 if [[ -z $SYNCTHING_API_KEY ]]; then
 	: "${SYNCTHING_CONFIG_FILE:="$HOME/.config/syncthing/config.xml"}"
-	apikey_regex='^\s+<apikey>([^<]+)</apikey>$'
-	apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
+       # MacOS stores config.xml in a different path:
+       uname -o | grep -q Darwin && SYNCTHING_CONFIG_FILE="$HOME/Library/Application Support/Syncthing/config.xml"
+       apikey_regex="^\s+<apikey>([^<]+)</apikey>$"
+       apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
 	[[ $apikey_line =~ $apikey_regex ]] &&
 		SYNCTHING_API_KEY=${BASH_REMATCH[1]}
 fi
