@@ -14,15 +14,24 @@ done
 	exit 1
 
 if [[ -z $SYNCTHING_API_KEY ]]; then
-	: "${SYNCTHING_CONFIG_FILE:="$HOME/.config/syncthing/config.xml"}"
-       # MacOS stores config.xml in a different path:
-       uname -o | grep -q Darwin && SYNCTHING_CONFIG_FILE="$HOME/Library/Application Support/Syncthing/config.xml"
-       apikey_regex="^\s+<apikey>([^<]+)</apikey>$"
-       apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
+         # MacOS stores config.xml in a different path:
+         case "$(uname -o)" in
+           *Linux)
+             : "${SYNCTHING_CONFIG_FILE:="$HOME/.config/syncthing/config.xml"}" ;;
+           Darwin)
+             : "${SYNCTHING_CONFIG_FILE:="$HOME/Library/Application Support/Syncthing/config.xml"}" ;;
+            *)
+              echo "Only *Linux and Darwin operating systems are supported - if you think this is an error, please open an issue: https://github.com/serl/syncthing-quick-status/issues/new"; exit ;;
+         esac
+         apikey_regex="^\s+<apikey>([^<]+)</apikey>$"
+         apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
 	[[ $apikey_line =~ $apikey_regex ]] &&
 		SYNCTHING_API_KEY=${BASH_REMATCH[1]}
 fi
 
+if [[ -z $SYNCTHING_API_KEY ]]; then
+         SYNCTHING_API_KEY=$(echo "$apikey_line" | cut -d ">" -f2|cut -d"<" -f1 2>/dev/null)
+fi
 if [[ -z $SYNCTHING_API_KEY ]]; then
 	echo "No API key in env. Set one of the variables SYNCTHING_API_KEY or SYNCTHING_CONFIG_FILE and try again..."
 	exit 1
