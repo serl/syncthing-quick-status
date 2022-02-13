@@ -151,26 +151,29 @@ for folder_id in "${RESULT_ARRAY[@]}"; do
 	if [[ -z $folder_status ]]; then
 		call_jq "db/status?folder=${folder_id// /+}" '.state'
 		folder_status="$RESULT"
+		call_jq "db/status?folder=${folder_id// /+}" '.errors'
+		folder_errors="$RESULT"
 		call_jq "db/status?folder=${folder_id// /+}" '.needBytes'
 		need_bytes="$RESULT"
-		need_bytes_formatted=
-		[[ $need_bytes -gt 0 ]] &&
-			need_bytes_formatted="$(numfmt --to=iec-i --suffix=B "$need_bytes")"
 	fi
 	case "$folder_status" in
 		paused)
 			folder_status="${COLOR_GRAY}$folder_status${COLOR_RESET}"
 			;;
 		idle)
-			[[ $need_bytes -eq 0 ]] &&
-				folder_status="${COLOR_GREEN}up to date${COLOR_RESET}" ||
-				folder_status="${COLOR_RED}out of sync${COLOR_RESET}"
+			if [[ $folder_errors -gt 0 ]]; then
+				folder_status="${COLOR_RED}$folder_errors failed items${COLOR_RESET}"
+			elif [[ $need_bytes -gt 0 ]]; then
+				need_bytes_formatted="$(numfmt --to=iec-i --suffix=B "$need_bytes")"
+				folder_status="${COLOR_RED}out of sync${COLOR_RESET} ($need_bytes_formatted)"
+			else
+				folder_status="${COLOR_GREEN}up to date${COLOR_RESET}"
+			fi
 			;;
 		scanning|syncing)
 			folder_status="${COLOR_BLUE}$folder_status${COLOR_RESET}"
 			;;
 	esac
-	[[ $need_bytes -gt 0 ]] && folder_status+=" ($need_bytes_formatted)"
 	echo -e "$folder_status"
 done
 
