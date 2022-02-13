@@ -8,7 +8,7 @@ An elegant(?), fast(?) and colorful(!) solution to have the complete(?) `syncthi
 
 ## Dependencies
 
-* bash 4 or 5
+* bash 4+
 * `curl`
 * `jq`
 * works on Linux as well as on MacOS

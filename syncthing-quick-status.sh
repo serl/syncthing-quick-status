@@ -14,17 +14,14 @@ done
 	exit 1
 
 if [[ -z $SYNCTHING_API_KEY ]]; then
-         # MacOS stores config.xml in a different path:
-         case "$(uname -o)" in
-           *Linux)
-             : "${SYNCTHING_CONFIG_FILE:="$HOME/.config/syncthing/config.xml"}" ;;
-           Darwin)
-             : "${SYNCTHING_CONFIG_FILE:="$HOME/Library/Application Support/Syncthing/config.xml"}" ;;
-            *)
-              echo "Only *Linux and Darwin operating systems are supported - if you think this is an error, please open an issue: https://github.com/serl/syncthing-quick-status/issues/new"; exit ;;
-         esac
-         apikey_regex="^\s+<apikey>([^<]+)</apikey>$"
-         apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
+	SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/.config/syncthing/config.xml"
+	if [[ $(uname) = Darwin ]]; then
+		# config.xml is stored in a different path in MacOS:
+		SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/Library/Application Support/Syncthing/config.xml"
+	fi
+	: "${SYNCTHING_CONFIG_FILE:="$SYNCTHING_DEFAULT_CONFIG_FILE"}"
+	apikey_regex='^\s+<apikey>([^<]+)</apikey>$'
+	apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
 	[[ $apikey_line =~ $apikey_regex ]] &&
 		SYNCTHING_API_KEY=${BASH_REMATCH[1]}
 fi
