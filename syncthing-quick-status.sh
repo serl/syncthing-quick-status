@@ -62,7 +62,8 @@ function jq_arg() {
 
 function call_jq() { # $0 api_name jq_commands
 	get_api_response "$1" &&
-		RESULT="$(jq_arg "$RESULT" "$2")"
+		RESULT="$(jq_arg "$RESULT" "$2")" &&
+		mapfile -t RESULT_ARRAY <<< "$RESULT"
 }
 
 function format_time() {
@@ -133,7 +134,7 @@ done
 
 echo -e "\nFolders:"
 call_jq "system/config" '.folders[] | .id'
-for folder_id in $RESULT; do
+for folder_id in "${RESULT_ARRAY[@]}"; do
 	call_jq "system/config" '.folders | map(select(.id == "'"$folder_id"'"))[]'
 	folder_config="$RESULT"
 	folder_label="$(jq_arg "$folder_config" '.label')"
@@ -148,9 +149,9 @@ for folder_id in $RESULT; do
 	folder_paused="$(jq_arg "$folder_config" '.paused')"
 	[[ $folder_paused == true ]] && folder_status="paused"
 	if [[ -z $folder_status ]]; then
-		call_jq "db/status?folder=$folder_id" '.state'
+		call_jq "db/status?folder=${folder_id// /+}" '.state'
 		folder_status="$RESULT"
-		call_jq "db/status?folder=$folder_id" '.needBytes'
+		call_jq "db/status?folder=${folder_id// /+}" '.needBytes'
 		need_bytes="$RESULT"
 		need_bytes_formatted=
 		[[ $need_bytes -gt 0 ]] &&
