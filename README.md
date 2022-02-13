@@ -11,6 +11,7 @@ An elegant(?), fast(?) and colorful(!) solution to have the complete(?) `syncthi
 * bash 4+
 * `curl`
 * `jq`
+* `coreutils` (for `numfmt`)
 * works on Linux as well as on MacOS
 
 ## Env variables
