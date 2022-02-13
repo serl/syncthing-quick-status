@@ -70,6 +70,16 @@ function format_time() {
 	echo "${COLOR_GRAY}$(echo "$1" | cut -d'.' -f1)${COLOR_RESET}"
 }
 
+function time_to_epoch() {
+	if date --version &>/dev/null; then
+		# GNU date
+		date --date="$1" +%s
+	else
+		# macos date
+		date -jf '%Y-%m-%dT%H:%M:%S' "$(echo "$1" | cut -d'.' -f1)" +%s
+	fi
+}
+
 function get_messages() { # $0 api_name jq_commands message_color_control_code max_age_in_seconds
 	call_jq "$1" "$2"
 	RESULT="$(jq_arg "$RESULT" '.when + " " + .message' | tail -n "$LOG_ENTRIES_LIMIT")"
@@ -82,7 +92,7 @@ function get_messages() { # $0 api_name jq_commands message_color_control_code m
 		[[ -z $line ]] && continue
 		when="$(echo "$line" | cut -d' ' -f1)"
 		message="$(echo "$line" | cut -d' ' -f2-)"
-		timestamp="$(date --date="$when" +%s)"
+		timestamp="$(time_to_epoch "$when")"
 		formatted_line="$(format_time "$when") ${message_color}$message${COLOR_RESET}"$'\n'
 		[[ $max_age -gt 0 ]] && [[ $timestamp -lt $min_timestamp ]] &&
 			continue
