@@ -8,16 +8,17 @@ An elegant(?), fast(?) and colorful(!) solution to have the complete(?) `syncthi
 
 ## Dependencies
 
-* bash 4
+* bash 4+
 * `curl`
 * `jq`
+* works on Linux as well as on MacOS
 
 ## Env variables
 
 * `SYNCTHING_API_KEY`.
-* `SYNCTHING_CONFIG_FILE`, the place where it'll look for the api key if not given in the variable above. Defaults to `$HOME/.config/syncthing/config.xml`.
+* `SYNCTHING_CONFIG_FILE`, the place where it'll look for the api key if not given in the variable above. Defaults to `$HOME/.config/syncthing/config.xml` on Linux and `$HOME/Library/Application Support/Syncthing/config.xml` on MacOS.
 * `SYNCTHING_ADDRESS`, defaults to `localhost:8384`.
 
 ## Arguments
 
-* `-v`: verbose, show devices/folder ids and a selection of latest log messages.
+* `-v`: verbose, show devices/folder ids and a selection of latest log messages (which is specially helpful for more details about "out of sync" folders).
