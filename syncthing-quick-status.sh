@@ -14,17 +14,14 @@ done
 	exit 1
 
 if [[ -z $SYNCTHING_API_KEY ]]; then
-	SYNCTHING_DEFAULT_STATEDIR="$HOME/.local/state/syncthing"
 	SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/.config/syncthing/config.xml"
+	if [[ ! -r "$SYNCTHING_DEFAULT_CONFIG_FILE" ]]; then
+		SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/.local/state/syncthing/config.xml"
+ 	fi
 	if [[ $(uname) = Darwin ]]; then
-		# config.xml is stored in a different path in MacOS:
 		SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/Library/Application Support/Syncthing/config.xml"
 	fi
-	if [[ -r "$SYNCTHING_DEFAULT_CONFIG_FILE" ]]; then
-		: "${SYNCTHING_CONFIG_FILE:="$SYNCTHING_DEFAULT_CONFIG_FILE"}"
-	elif [[ -r "$SYNCTHING_DEFAULT_STATEDIR/config.xml" ]]; then
-		: "${SYNCTHING_CONFIG_FILE:="$SYNCTHING_DEFAULT_STATEDIR/config.xml"}"
-	fi
+	: "${SYNCTHING_CONFIG_FILE:="$SYNCTHING_DEFAULT_CONFIG_FILE"}"
 	apikey_regex='<apikey>([^<]+)</apikey>'
 	apikey_line="$(grep -E "$apikey_regex" "$SYNCTHING_CONFIG_FILE")"
 	[[ $apikey_line =~ $apikey_regex ]] &&
