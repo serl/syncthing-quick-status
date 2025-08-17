@@ -15,8 +15,10 @@ done
 
 if [[ -z $SYNCTHING_API_KEY ]]; then
 	SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/.config/syncthing/config.xml"
+	if [[ ! -r "$SYNCTHING_DEFAULT_CONFIG_FILE" ]]; then
+		SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/.local/state/syncthing/config.xml"
+ 	fi
 	if [[ $(uname) = Darwin ]]; then
-		# config.xml is stored in a different path in MacOS:
 		SYNCTHING_DEFAULT_CONFIG_FILE="$HOME/Library/Application Support/Syncthing/config.xml"
 	fi
 	: "${SYNCTHING_CONFIG_FILE:="$SYNCTHING_DEFAULT_CONFIG_FILE"}"
